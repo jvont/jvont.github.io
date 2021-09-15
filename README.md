@@ -8,8 +8,8 @@ Page is very much a work-in-progress, the ultimate goal is to create a simple st
 
 This site uses [Jinja2](https://jinja.palletsprojects.com/en/3.0.x/) for static site generation. To build, simply run:
 
-```Python
-python generator.py
+```
+make build
 ```
 
 and the complete static source will be built to the `build/` directory.

@@ -5,6 +5,7 @@ PYTHON = $(VENV)/bin/python
 PIP = $(VENV)/bin/pip
 
 BUILD = build
+MSG = "auto-build"
 
 $(VENV)/bin/activate: requirements.txt
 	virtualenv $(VENV)
@@ -15,7 +16,7 @@ build: $(VENV)/bin/activate
 
 deploy: build
 	git add build/*
-	git commit -m "auto-build"
+	git commit -m $(MSG)
 	git subtree push --prefix $(BUILD) origin gh-pages
 
 clean:
