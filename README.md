@@ -1,9 +1,15 @@
-# Navigation
+# jvont
 
-## [portfolio](https://jvont.github.io/portfolio/index.html)
+Welcome to the repo for my site at http://jvont.github.io!
 
-### [project1](https://jvont.github.io/portfolio/project1/index.html)
+Page is very much a work-in-progress, the ultimate goal is to create a simple static site for hosting my resume and showcasing projects I've worked on.
 
-### [project2](https://jvont.github.io/portfolio/project2/index.html)
+## about the site
 
-## [resume](https://jvont.github.io/resume/index.html)
+This site uses [Jinja2](https://jinja.palletsprojects.com/en/3.0.x/) for static site generation. To build, simply run:
+
+```Python
+python generator.py
+```
+
+and the complete static source will be built to the `build/` directory.
