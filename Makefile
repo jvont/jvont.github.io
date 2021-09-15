@@ -1,17 +1,23 @@
 # from: https://earthly.dev/blog/python-makefile/
 
-SHELL := /bin/bash
+VENV = venv
+PYTHON = $(VENV)/bin/python
+PIP = $(VENV)/bin/pip
 
-venv/bin/activate: requirements.txt
-	virtualenv venv
-	./venv/bin/pip install -r requirements.txt
+BUILD = build
 
-build: venv/bin/activate
-	./venv/bin/python generator.py
+$(VENV)/bin/activate: requirements.txt
+	virtualenv $(VENV)
+	$(PIP) install -r requirements.txt
+
+build: $(VENV)/bin/activate
+	$(PYTHON) generator.py
 
 deploy: build
-	git subtree push --prefix build origin gh-pages
+	git add build/*
+	git commit -m "auto-build"
+	git subtree push --prefix $(BUILD) origin gh-pages
 
 clean:
 	rm -rf __pycache__
-	rm -rf venv
+	rm -rf $(VENV)
