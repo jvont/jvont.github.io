@@ -1,2 +1,6 @@
 node_modules/
-dist/
+
+# ignore generated content
+public/*
+!public/images
+!public/js

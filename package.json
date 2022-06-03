@@ -19,6 +19,7 @@
   "homepage": "https://jvont.github.io",
   "dependencies": {
     "handlebars": "^4.7.7",
+    "marked": "^4.0.16",
     "sass": "^1.52.2"
   }
 }
