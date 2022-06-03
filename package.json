@@ -1,0 +1,24 @@
+{
+  "name": "jvont.github.io",
+  "version": "1.0.0",
+  "description": "Personal static website",
+  "main": "index.js",
+  "scripts": {
+    "generate": "index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jvont/jvont.github.io.git"
+  },
+  "author": "Johann von Tiesenhausen",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/jvont/jvont.github.io/issues"
+  },
+  "homepage": "https://jvont.github.io",
+  "dependencies": {
+    "handlebars": "^4.7.7",
+    "sass": "^1.52.2"
+  }
+}
