@@ -3,10 +3,13 @@ const path = require('path');
 const Handlebars = require('handlebars');
 const sass = require('sass');
 
-const SRC = `${__dirname}/src`;
+const PUBLIC = `${__dirname}/public`;
+
 
 const TEMPLATES = `${__dirname}/templates`;
 const STYLES = `${__dirname}/styles`;
+
+
 
 Handlebars.registerHelper('ifwith', function(context, options) {
   if (context && Object.keys(context).length) {

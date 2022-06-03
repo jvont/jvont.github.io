@@ -1,4 +1,4 @@
-name: Build static site and deploy to gh-pages branch
+name: Deploy static content to gh-pages branch
 
 on:
   push:
@@ -6,25 +6,25 @@ on:
       - main
 
 jobs:
-  gh-pages:
+  deploy:
     runs-on: self-hosted
     steps:
-      - name: checkout
+      - name: Checkout default branch
         uses: actions/checkout@v3
       
-      - name: setup node
+      - name: Setup node
         uses: actions/setup-node@v3
         with:
           node-version: 16.15.x
           cache: npm
 
-      - name: npm clean install
+      - name: Run 'npm ci'
         run: npm ci
 
-      - name: build
-        run: node index.js
+      - name: Build static content
+        run: npm run build
 
-      - name: deploy
+      - name: Deploy to gh-pages branch
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
