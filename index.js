@@ -17,9 +17,9 @@ marked.setOptions({
   langPrefix: ''
 });
 
-// Parse a template located at `file`.
+// Parse template data located at `file`.
 function parseTemplate(file) {
-  const data = fs.readFileSync(file, 'utf-8');
+  const data = fs.readFileSync(file, 'utf-8')
   const { attributes, body } = fm(data);
   const page = {
     ...attributes,
@@ -38,47 +38,35 @@ function parseTemplate(file) {
   return page;
 }
 
-// Load/register templates/partials.
-function loadTemplates(templatesDir) {
-  // register partials directory
-  glob
-    .sync(`${templatesDir}/partials/**/*.hbs`)
-    .forEach(file => {
-      handlebars.registerPartial(
-        path.parse(file).name,
-        fs.readFileSync(file, 'utf-8')
-      );
+// Parse content matching glob `pattern` with the given attribute `helpers`.
+function parseContent(pattern, helpers) {
+  helpers = helpers || {};
+
+  return glob.sync(pattern)
+    .map(parseTemplate)
+    .map(page => {
+      return Object.entries(helpers).reduce((prev, [attr, cb]) => {
+        return {
+          ...prev,
+          [attr]: prev[attr] || cb(prev)
+        };
+      });
     });
-
-  // load templates
-  return glob
-    .sync(`**/*.hbs`, { ignore: `partials/*` })
-    .reduce((templates, file) => {
-      const rel = path.parse(path.relative(templatesDir, file));
-      const name = path.join(rel.dir, rel.name);
-
-      // TODO: handle missing attributes
-
-      return {
-        ...templates,
-        [name]: fs.readFileSync(file, 'utf-8')
-      };
-    }, {});
 }
 
-// Parse page content, handle missing attributes (optional).
-function parseContent(contentDir, attrHelpers) {
+// Register template partials matching `pattern`.
+function registerPartials(pattern) {
+  glob.sync(pattern).forEach(file => {
+    handlebars.registerPartial(
+      path.parse(file).name,
+      fs.readFileSync(file, 'utf-8')
+    );
+  });
+}
 
-  return glob.sync(`${contentDir}/**/*.{html,md}`)
-    .map(parseTemplate);
-  
+// Recursively compile template `content`.
+function compileContent(content) {
 
-  // helpers = helpers || {};
-
-  // handle missing attributes
-  // return Object.entries(helpers) .reduce((prev, [attr, cb]) => (
-  //   { ...prev, [attr]: prev[attr] || cb(prev) }
-  // ), page);
 }
 
 // render content using a given template.
@@ -101,16 +89,6 @@ function parseContent(contentDir, attrHelpers) {
 
 // glob.sync(`${__dirname}/styles/**/_*.scss`);  // includes
 // glob.sync(`${__dirname}/styles/**/*.scss`);  // mains
-
-// // layout
-// const attrHelpers = {
-//   title: (file, page) => {
-
-//   },
-//   date: (file, page) => {
-
-//   }
-// };
 
 function render() {
   const TEMPLATES = `${__dirname}/templates`;
