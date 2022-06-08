@@ -1,7 +1,7 @@
+.vscode/
 node_modules/
 
 # ignore generated content
 public/*
 !public/images
 !public/js
-!public/posts

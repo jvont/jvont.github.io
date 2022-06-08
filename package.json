@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "build": "node index.js",
+    "start": "nodemon index.js --ext js,json,html,md,hbs,scss",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -18,8 +19,13 @@
   },
   "homepage": "https://jvont.github.io",
   "dependencies": {
+    "front-matter": "^4.0.2",
+    "glob": "^8.0.3",
     "handlebars": "^4.7.7",
     "marked": "^4.0.16",
     "sass": "^1.52.2"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.16"
   }
 }

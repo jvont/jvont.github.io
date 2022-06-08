@@ -18,8 +18,8 @@ jobs:
           node-version: 16.15.x
           cache: npm
 
-      - name: Run 'npm ci'
-        run: npm ci
+      - name: Install npm packages
+        run: npm ci --production
 
       - name: Build static content
         run: npm run build

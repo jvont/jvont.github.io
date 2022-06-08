@@ -3,9 +3,17 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Document</title>
+  <title>Title</title>
 </head>
 <body>
-  Test
+  <header>Header</header>
+  <nav>
+    Navigation
+    <ul>
+      {{#each posts}}
+        <a href='{{this}}'>{{this}}</a>
+      {{/each}}
+    </ul>
+  </nav>
 </body>
 </html>
