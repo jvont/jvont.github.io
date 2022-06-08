@@ -6,6 +6,7 @@ const glob = require('glob');
 const handlebars = require('handlebars');
 const marked = require('marked');
 const sass = require('sass');
+const { parse } = require('path');
 
 const ROOT = `${__dirname}/public`;
 const CONTENT = ['posts'];
@@ -23,12 +24,12 @@ marked.setOptions({
   langPrefix: ''
 });
 
-// Load template data from `file` and convert it to html.
-function loadTemplate(file) {
-  const data = fs.readFileSync(file, 'utf-8')
+// Load template data from `src` and convert it to html.
+function loadTemplate(src) {
+  const data = fs.readFileSync(src, 'utf-8')
   const { attributes, body } = fm(data);
 
-  switch (path.parse(file).ext) {
+  switch (path.parse(src).ext) {
     case '.md':
       attributes.content = marked.parse(body);
       break;
@@ -43,15 +44,16 @@ function loadTemplate(file) {
 // Parse content from `root` dir, matching glob `pattern`, with the 
 // given attribute `helpers` (object of attribute-helper pairs).
 function parseContent(root, pattern, helpers) {
-  pattern = pattern || '**/*';
-  helpers = helpers || {};
+  // defaults are directory file matches + link creation helper
+  pattern = pattern || '*.*';
+  helpers = { link: page => stripext(page._path), ...helpers };
 
   return glob.sync(pattern, { cwd: root })
-    .map(file => {
+    .map(src => {
       // parse template and add relative path
       return {
-        ...loadTemplate(path.join(root, file)),
-        _path: file
+        ...loadTemplate(path.join(root, src)),
+        _path: src
       };
     })
     .map(page => {
@@ -64,10 +66,10 @@ function parseContent(root, pattern, helpers) {
 
 // Register template partials matching `pattern` by their base name.
 function registerPartials(pattern) {
-  glob.sync(pattern).forEach(file => {
+  glob.sync(pattern).forEach(src => {
     handlebars.registerPartial(
-      path.parse(file).name,
-      fs.readFileSync(file, 'utf-8')
+      path.parse(src).name,
+      fs.readFileSync(src, 'utf-8')
     );
   });
 }
@@ -99,14 +101,30 @@ function render() {
   const TEMPLATES = `${__dirname}/templates`;
   const ROOT = `${__dirname}/public`;
 
+  // create site's root directory
+  fs.existsSync(ROOT) || fs.mkdirSync(ROOT);
+
   // register partials
-  registerPartials(`${TEMPLATES}/partials/**/*.hbs`);
+  registerPartials(`${TEMPLATES}/partials/*.hbs`);
+
+  // load templates
+  const templates = parseContent(TEMPLATES, '*.hbs');
 
   // load posts
   const posts = parseContent(`${__dirname}/posts`, '**/*.{html,hbs,md}', {
     title: page => path.parse(page._path).name,
-    link: page => stripext(page._path),
     template: _ => 'post'
+  });
+
+  // copy images
+  const IMAGES = `${__dirname}/images`;
+  const IMGROOT = `${ROOT}/images`;
+
+  fs.existsSync(IMGROOT) || fs.mkdirSync(IMGROOT);
+
+  glob.sync(`${IMAGES}/*`).forEach(src => {
+    const dest = path.join(IMGROOT, path.basename(src));
+    fs.copyFileSync(src, dest);
   });
 
   // compile scss
@@ -117,7 +135,6 @@ function render() {
   // handlebars.compile()
 
 
-  fs.existsSync(ROOT) || fs.mkdirSync(ROOT);
 }
 
 render()
