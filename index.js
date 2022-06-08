@@ -11,50 +11,58 @@ const ROOT = `${__dirname}/public`;
 const CONTENT = ['posts'];
 
 
+// Strip the file extension from `filepath`.
+function stripext(filepath) {
+  const parsedpath = path.parse(filepath);
+  return path.join(parsedpath.dir, parsedpath.name);
+}
+
 // Set parsing options for `.md` files.
 marked.setOptions({
   headerIds: false,
   langPrefix: ''
 });
 
-// Parse template data located at `file`.
-function parseTemplate(file) {
+// Load template data from `file` and convert it to html.
+function loadTemplate(file) {
   const data = fs.readFileSync(file, 'utf-8')
   const { attributes, body } = fm(data);
-  const page = {
-    ...attributes,
-    _path: file
-  }
 
   switch (path.parse(file).ext) {
     case '.md':
-      page.content = marked.parse(body);
+      attributes.content = marked.parse(body);
       break;
     case '.hbs':
     default:
-      page.content = body;
+      attributes.content = body;
       break;
   }
-  return page;
+  return attributes;
 }
 
-// Parse content matching glob `pattern` with the given attribute `helpers`.
-function parseContent(pattern, helpers) {
+// Parse content from `root` dir, matching glob `pattern`, with the 
+// given attribute `helpers` (object of attribute-helper pairs).
+function parseContent(root, pattern, helpers) {
+  pattern = pattern || '**/*';
   helpers = helpers || {};
 
-  return glob.sync(pattern)
-    .map(parseTemplate)
+  return glob.sync(pattern, { cwd: root })
+    .map(file => {
+      // parse template and add relative path
+      return {
+        ...loadTemplate(path.join(root, file)),
+        _path: file
+      };
+    })
     .map(page => {
-      return Object.entries(helpers).reduce((prev, [attr, cb]) => {
-        return {
-          ...prev,
-          [attr]: prev[attr] || cb(prev)
-        };
-      });
+      // handle missing attributes using helpers
+      return Object.entries(helpers).reduce((prev, [attr, helper]) => {
+        return { ...prev, [attr]: prev[attr] || helper(prev) };
+      }, page);
     });
 }
 
-// Register template partials matching `pattern`.
+// Register template partials matching `pattern` by their base name.
 function registerPartials(pattern) {
   glob.sync(pattern).forEach(file => {
     handlebars.registerPartial(
@@ -87,33 +95,29 @@ function compileContent(content) {
 //   });
 // }
 
-// glob.sync(`${__dirname}/styles/**/_*.scss`);  // includes
-// glob.sync(`${__dirname}/styles/**/*.scss`);  // mains
-
 function render() {
   const TEMPLATES = `${__dirname}/templates`;
-  const POSTS = `${__dirname}/posts`
-  
-  const ROOT = `${__dirname}/public`
+  const ROOT = `${__dirname}/public`;
 
-  // load templates
-  const templates = loadTemplates(TEMPLATES);
-  // console.log(templates);
+  // register partials
+  registerPartials(`${TEMPLATES}/partials/**/*.hbs`);
 
-  // load content
-  const content = parseContent(POSTS, {
+  // load posts
+  const posts = parseContent(`${__dirname}/posts`, '**/*.{html,hbs,md}', {
     title: page => path.parse(page._path).name,
-    link: page => {
-      const parsedPath = path.parse(page._path);
-      return path.join(parsedPath.dir, parsedPath.name);
-    },
+    link: page => stripext(page._path),
     template: _ => 'post'
   });
-  console.log(content);
 
+  // compile scss
+  // glob.sync(`${__dirname}/styles/**/_*.scss`);  // includes
+  // glob.sync(`${__dirname}/styles/**/*.scss`);  // mains
   // const css = sass.compile(`${__dirname}/styles/main.scss`).css;
 
   // handlebars.compile()
+
+
+  fs.existsSync(ROOT) || fs.mkdirSync(ROOT);
 }
 
 render()
