@@ -12,17 +12,17 @@ const ROOT = `${__dirname}/public`;
 const CONTENT = ['posts'];
 
 
-// Strip the file extension from `filepath`.
-function stripext(filepath) {
-  const parsedpath = path.parse(filepath);
-  return path.join(parsedpath.dir, parsedpath.name);
-}
-
 // Set parsing options for `.md` files.
 marked.setOptions({
   headerIds: false,
   langPrefix: ''
 });
+
+// Strip the file extension from `filepath`.
+function stripext(filepath) {
+  const parsedpath = path.parse(filepath);
+  return path.join(parsedpath.dir, parsedpath.name);
+}
 
 // Load template data from `src` and convert it to html.
 function loadTemplate(src) {
@@ -41,12 +41,12 @@ function loadTemplate(src) {
   return attributes;
 }
 
-// Parse content from `root` dir, matching glob `pattern`, with the 
-// given attribute `helpers` (object of attribute-helper pairs).
+// Parse pattern-matched content relative to a root directory using the
+// given attribute helpers (object of attribute-helper pairs).
 function parseContent(root, pattern, helpers) {
   // defaults are directory file matches + link creation helper
   pattern = pattern || '*.*';
-  helpers = { link: page => stripext(page._path), ...helpers };
+  helpers = helpers || {};
 
   return glob.sync(pattern, { cwd: root })
     .map(src => {
@@ -58,13 +58,13 @@ function parseContent(root, pattern, helpers) {
     })
     .map(page => {
       // handle missing attributes using helpers
-      return Object.entries(helpers).reduce((prev, [attr, helper]) => {
-        return { ...prev, [attr]: prev[attr] || helper(prev) };
+      return Object.entries(helpers).reduce((acc, [attr, helper]) => {
+        return { ...acc, [attr]: helper(acc) };
       }, page);
     });
 }
 
-// Register template partials matching `pattern` by their base name.
+// Register pattern-matched template partials by their base name.
 function registerPartials(pattern) {
   glob.sync(pattern).forEach(src => {
     handlebars.registerPartial(
@@ -74,28 +74,15 @@ function registerPartials(pattern) {
   });
 }
 
-// Recursively compile template `content`.
-function compileContent(content) {
-
+// Recursively compile content using the given templates.
+function compileContent(content, tmpts) {
+  
+  // await fs.writeFile(
+  //   path.join(rootDir, noext),
+  //   handlebars.compile(template)(data)
+  // );
+  // return path.join(rootDir, noext);
 }
-
-// render content using a given template.
-// async function renderContent(contentDir, template) {
-//   const files = glob.sync(`${contentDir}/**/*.{html,md}`);
-//   return files.map(async file => {
-//     const rel = path.parse(path.relative(contentDir, file));
-//     const noext = path.join(rel.dir, rel.name);
-
-//     const content = await fs.readFile(file, 'utf-8');
-//     const data = rel.ext === '.md' ? marked.parse(content) : content;
-
-//     // await fs.writeFile(
-//     //   path.join(rootDir, noext),
-//     //   handlebars.compile(template)(data)
-//     // );
-//     return path.join(rootDir, noext);
-//   });
-// }
 
 function render() {
   const TEMPLATES = `${__dirname}/templates`;
@@ -107,13 +94,35 @@ function render() {
   // register partials
   registerPartials(`${TEMPLATES}/partials/*.hbs`);
 
-  // load templates
-  const templates = parseContent(TEMPLATES, '*.hbs');
+  // load templates, store by link
+  const tmpts = parseContent(TEMPLATES, '*.hbs').reduce((acc, page) => {
+    const link = stripext(page._path);
+    return { ...acc, [link]: page };
+  }, {});
 
   // load posts
   const posts = parseContent(`${__dirname}/posts`, '**/*.{html,hbs,md}', {
-    title: page => path.parse(page._path).name,
-    template: _ => 'post'
+    title: page => page.title || path.parse(page._path).name,
+    link: page => page.link ? path.normalize(page.link) : stripext(page._path),
+    template: page => page.template || 'post'
+  });
+
+  // compile site content
+  // const comp = compileContent(posts, tmpts);
+
+  // TODO: create object with array of pages, etc.
+  // recursively compile each object
+
+  posts.forEach(page => {
+    const tmpt = tmpts[page.template];
+    
+    const dest = path.join(ROOT, page.link);
+    const dir = path.dirname(dest);
+    fs.existsSync(dir) || fs.mkdirSync(dir, { recursive: true });
+
+    const cmp = handlebars.compile(tmpt.content)(page);
+
+    fs.writeFileSync(dest, cmp, 'utf-8');
   });
 
   // copy images
@@ -133,8 +142,6 @@ function render() {
   // const css = sass.compile(`${__dirname}/styles/main.scss`).css;
 
   // handlebars.compile()
-
-
 }
 
 render()
